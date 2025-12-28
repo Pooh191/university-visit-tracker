@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Visit Tracker</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', 'Prompt', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+        }
+        
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            margin-bottom: 5px;
+        }
+        
+        .header .badge-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .badge-google {
+            background: #4285f4;
+            color: white;
+        }
+        
+        .badge-drive {
+            background: #34a853;
+            color: white;
+        }
+        
+        .badge-sheet {
+            background: #fbbc05;
+            color: white;
+        }
+        
+        .content {
+            flex: 1;
+            position: relative;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .iframe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #appsScriptFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.3s ease;
+        }
+        
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--secondary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .loading-subtext {
+            color: #666;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        
+        .controls {
+            background: #f8f9fa;
+            padding: 15px 30px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .btn-control {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .error-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            max-width: 500px;
+            padding: 40px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: none;
+        }
+        
+        .error-icon {
+            font-size: 4rem;
+            color: var(--danger);
+            margin-bottom: 20px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 15px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                height: 100vh;
+            }
+            
+            .main-card {
+                height: 95vh;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .btn-control {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .btn {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                padding: 20px 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .badge-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn-control {
+                flex-direction: column;
+            }
+        }
+        
+        /* Fullscreen mode */
+        .fullscreen-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            background: white;
+        }
+        
+        .fullscreen-mode .header {
+            display: none;
+        }
+        
+        .fullscreen-mode .controls {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 10000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-card">
+            <!-- Header -->
+            <div class="header">
+                <h1>
+                    <i class="bi bi-building"></i>
+                    University Visit Tracker
+                </h1>
+                <p>ระบบจัดการรูปภาพการเยี่ยมชมมหาวิทยาลัยด้วย Smart Folder Logic</p>
+                <div class="badge-container">
+                    <span class="badge badge-google">
+                        <i class="bi bi-google"></i> Google Apps Script
+                    </span>
+                    <span class="badge badge-drive">
+                        <i class="bi bi-cloud"></i> Google Drive API
+                    </span>
+                    <span class="badge badge-sheet">
+                        <i class="bi bi-table"></i> Google Sheets
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Content Area -->
+            <div class="content">
+                <!-- Loading Overlay -->
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div class="spinner"></div>
+                    <div class="loading-text">กำลังโหลดระบบ University Visit Tracker</div>
+                    <div class="loading-subtext">กรุณารอสักครู่...</div>
+                </div>
+                
+                <!-- Error Message (Hidden by default) -->
+                <div class="error-message" id="errorMessage">
+                    <div class="error-icon">⚠️</div>
+                    <h3>ไม่สามารถโหลดระบบได้</h3>
+                    <p class="mb-3">เกิดข้อผิดพลาดในการเชื่อมต่อกับ Google Apps Script</p>
+                    <p class="small text-muted mb-4">
+                        กรุณาตรวจสอบ:<br>
+                        1. การเชื่อมต่ออินเทอร์เน็ต<br>
+                        2. สิทธิ์การเข้าถึง Web App<br>
+                        3. หรือลองอีกครั้งในภายหลัง
+                    </p>
+                    <button class="btn btn-primary" onclick="retryConnection()">
+                        <i class="bi bi-arrow-clockwise"></i> ลองอีกครั้ง
+                    </button>
+                </div>
+                
+                <!-- Google Apps Script Web App -->
+                <div class="iframe-wrapper">
+                    <iframe 
+                        id="appsScriptFrame"
+                        src="https://script.google.com/macros/s/AKfycbyVTZW5R8-j0KdRitn0d9N5-12LEA-a85AwMWmVIygRa_pubtk2Ia1-6U0bTzFKQWDQ-Q/exec"
+                        title="University Visit Tracker System"
+                        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-downloads"
+                        allow="microphone; camera; display-capture *"
+                    ></iframe>
+                </div>
+            </div>
+            
+            <!-- Controls -->
+            <div class="controls">
+                <div class="status" id="connectionStatus">
+                    <i class="bi bi-circle-fill"></i>
+                    <span>กำลังเชื่อมต่อ...</span>
+                </div>
+                <div class="btn-control">
+                    <button class="btn btn-outline-primary" onclick="refreshFrame()">
+                        <i class="bi bi-arrow-clockwise"></i> รีเฟรช
+                    </button>
+                    <button class="btn btn-outline-success" onclick="toggleFullscreen()">
+                        <i class="bi bi-arrows-fullscreen"></i> เต็มหน้าจอ
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="openInNewTab()">
+                        <i class="bi bi-box-arrow-up-right"></i> เปิดใหม่
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        University Visit Tracker © 2024 | Powered by Google Apps Script
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // DOM Elements
+        const frame = document.getElementById('appsScriptFrame');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errorMessage = document.getElementById('errorMessage');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const statusIcon = connectionStatus.querySelector('i');
+        const statusText = connectionStatus.querySelector('span');
+        
+        // State variables
+        let isFullscreen = false;
+        let connectionRetries = 0;
+        const MAX_RETRIES = 3;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', initializeApp);
+        
+        function initializeApp() {
+            console.log('🚀 Initializing University Visit Tracker Interface...');
+            
+            // Set up iframe event listeners
+            frame.addEventListener('load', handleFrameLoad);
+            frame.addEventListener('error', handleFrameError);
+            
+            // Initial connection check
+            setTimeout(checkConnection, 1000);
+            
+            // Add click handler to refresh button
+            document.querySelector('.btn-outline-primary').addEventListener('click', refreshFrame);
+            
+            // Handle beforeunload to show loading
+            window.addEventListener('beforeunload', () => {
+                showLoading();
+            });
+        }
+        
+        function handleFrameLoad() {
+            console.log('✅ Google Apps Script Web App loaded successfully');
+            
+            // Hide loading with delay for better UX
+            setTimeout(() => {
+                hideLoading();
+                hideError();
+                updateConnectionStatus(true, 'เชื่อมต่อสำเร็จ');
+            }, 500);
+            
+            connectionRetries = 0;
+        }
+        
+        function handleFrameError(event) {
+            console.error('❌ Failed to load Google Apps Script:', event);
+            
+            if (connectionRetries < MAX_RETRIES) {
+                connectionRetries++;
+                console.log(`🔄 Retrying connection (${connectionRetries}/${MAX_RETRIES})...`);
+                
+                setTimeout(() => {
+                    refreshFrameWithCacheBust();
+                }, 2000);
+            } else {
+                showError();
+                updateConnectionStatus(false, 'การเชื่อมต่อล้มเหลว');
+            }
+        }
+        
+        function showLoading() {
+            loadingOverlay.classList.remove('hidden');
+            updateConnectionStatus(false, 'กำลังโหลด...');
+        }
+        
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+        }
+        
+        function showError() {
+            errorMessage.style.display = 'block';
+            hideLoading();
+        }
+        
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+        
+        function updateConnectionStatus(isConnected, message) {
+            // Update status text
+            statusText.textContent = message;
+            
+            // Update status icon and color
+            if (isConnected) {
+                connectionStatus.className = 'status connected';
+                statusIcon.className = 'bi bi-check-circle-fill';
+                statusIcon.style.color = '#28a745';
+            } else if (message.includes('กำลัง')) {
+                connectionStatus.className = 'status loading';
+                statusIcon.className = 'bi bi-arrow-repeat';
+                statusIcon.style.animation = 'spin 1s linear infinite';
+            } else {
+                connectionStatus.className = 'status error';
+                statusIcon.className = 'bi bi-exclamation-circle-fill';
+                statusIcon.style.color = '#dc3545';
+            }
+        }
+        
+        function checkConnection() {
+            try {
+                const frameDoc = frame.contentDocument || frame.contentWindow.document;
+                
+                if (frameDoc && frameDoc.readyState === 'complete') {
+                    updateConnectionStatus(true, 'เชื่อมต่อแล้ว');
+                } else {
+                    updateConnectionStatus(false, 'กำลังตรวจสอบ...');
+                    setTimeout(checkConnection, 1000);
+                }
+            } catch (error) {
+                // Cross-origin access error is normal
+                updateConnectionStatus(true, 'เชื่อมต่อกับ Google Apps Script');
+            }
+        }
+        
+        function refreshFrame() {
+            console.log('🔄 Refreshing application...');
+            
+            showLoading();
+            updateConnectionStatus(false, 'กำลังรีเฟรช...');
+            
+            // Simple refresh
+            frame.src = frame.src;
+            
+            // Re-check connection after delay
+            setTimeout(checkConnection, 1500);
+        }
+        
+        function refreshFrameWithCacheBust() {
+            const timestamp = new Date().getTime();
+            const baseUrl = frame.src.split('?')[0];
+            frame.src = baseUrl + '?t=' + timestamp;
+        }
+        
+        function toggleFullscreen() {
+            if (!isFullscreen) {
+                enterFullscreen();
+            } else {
+                exitFullscreen();
+            }
+        }
+        
+        function enterFullscreen() {
+            const mainCard = document.querySelector('.main-card');
+            mainCard.classList.add('fullscreen-mode');
+            document.body.style.overflow = 'hidden';
+            isFullscreen = true;
+            
+            // Update button
+            const fullscreenBtn = document.querySelector('.btn-outline-success');
+            fullscreenBtn.innerHTML = '<i class="bi bi-fullscreen-exit"></i> ออกจากเต็มหน้าจอ';
+            fullscreenBtn.classList.remove('btn-outline-success');
+            fullscreenBtn.classList.add('btn-outline-danger');
+            
+            console.log('🔲 Entered fullscreen mode');
+        }
+        
+        function exitFullscreen() {
+            const mainCard = document.querySelector('.main-card');
+            mainCard.classList.remove('fullscreen-mode');
+            document.body.style.overflow = 'auto';
+            isFullscreen = false;
+            
+            // Update button
+            const fullscreenBtn = document.querySelector('.btn-outline-danger');
+            fullscreenBtn.innerHTML = '<i class="bi bi-arrows-fullscreen"></i> เต็มหน้าจอ';
+            fullscreenBtn.classList.remove('btn-outline-danger');
+            fullscreenBtn.classList.add('btn-outline-success');
+            
+            console.log('🔳 Exited fullscreen mode');
+        }
+        
+        function openInNewTab() {
+            const url = frame.src;
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+        
+        function retryConnection() {
+            hideError();
+            showLoading();
+            connectionRetries = 0;
+            refreshFrameWithCacheBust();
+        }
+        
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', () => {
+            refreshFrame();
+        });
+        
+        // Auto-refresh every 30 minutes to prevent session timeout
+        setInterval(() => {
+            if (document.hasFocus()) {
+                console.log('⏰ Auto-refreshing to maintain session...');
+                refreshFrameWithCacheBust();
+            }
+        }, 30 * 60 * 1000); // 30 minutes
+        
+        // Handle keyboard shortcuts
+        document.addEventListener('keydown', (event) => {
+            // Ctrl/Cmd + R to refresh
+            if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
+                event.preventDefault();
+                refreshFrame();
+            }
+            
+            // F5 to refresh
+            if (event.key === 'F5') {
+                event.preventDefault();
+                refreshFrame();
+            }
+            
+            // Escape to exit fullscreen
+            if (event.key === 'Escape' && isFullscreen) {
+                exitFullscreen();
+            }
+        });
+        
+        // Prevent right-click on iframe (optional)
+        frame.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+        });
+        
+        // Handle offline/online events
+        window.addEventListener('online', () => {
+            console.log('📶 Connection restored');
+            updateConnectionStatus(false, 'กำลังเชื่อมต่อใหม่...');
+            setTimeout(checkConnection, 1000);
+        });
+        
+        window.addEventListener('offline', () => {
+            console.log('📶 Connection lost');
+            updateConnectionStatus(false, 'การเชื่อมต่อขาดหาย');
+        });
+        
+        // Initialize service worker for PWA (optional)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(console.error);
+        }
+        
+        // Add to home screen prompt for mobile
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (event) => {
+            event.preventDefault();
+            deferredPrompt = event;
+            
+            // Show install button
+            const installBtn = document.createElement('button');
+            installBtn.className = 'btn btn-success';
+            installBtn.innerHTML = '<i class="bi bi-download"></i> ติดตั้งแอป';
+            installBtn.style.marginLeft = '10px';
+            installBtn.onclick = installApp;
+            
+            document.querySelector('.btn-control').appendChild(installBtn);
+        });
+        
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+    </script>
+</body>
+</html>
