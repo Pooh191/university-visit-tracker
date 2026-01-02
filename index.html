@@ -418,10 +418,14 @@
     
     <!-- Footer -->
     <div class="footer">
-        University Visit Tracker © 2024 | Powered by Google Apps Script
+        University Visit Tracker © 2025 - <span id="currentYear"></span>  | Powered by Thanakorn Sae-jong
     </div>
     
     <!-- JavaScript -->
+
+    <script>
+        document.getElementById("currentYear").textContent = new Date().getFullYear();
+    </script>
     <script>
         // DOM Elements
         const frame = document.getElementById('appsScriptFrame');
